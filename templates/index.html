@@ -1,1 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xploit Chk | Sistema de Auditoría Digital</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS BASE (MINIMALISTAS) --- */
+        :root {
+            --bg: #050505; /* Fondo casi negro, muy profundo */
+            --card-bg: rgba(20, 20, 20, 0.6); /* Tarjeta semi-transparente para el efecto */
+            --primary: #ff3e3e; /* Rojo Xploit */
+            --primary-dim: rgba(255, 62, 62, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --success: #00ff41; /* Verde Matrix para logs */
+            --border-radius: 16px; /* Bordes muy redondeados y modernos */
+        }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Importante para las partículas */
+        }
+
+        /* --- CONTENEDOR DE PARTÍCULAS (FONDO INTERACTIVO) --- */
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1; /* Detrás de todo */
+        }
+
+        /* --- TARJETA PRINCIPAL (GLASSMORPHISM CLEAN) --- */
+        .main-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 540px;
+            padding: 50px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.05); /* Borde sutil */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px); /* Efecto de vidrio esmerilado */
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 10; /* Encima de las partículas */
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        /* Efecto sutil al pasar el mouse por la tarjeta */
+        .main-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 62, 62, 0.2);
+        }
+
+        h1 {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        /* --- FORMULARIO Y ENTRADAS (CLEAN) --- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        input {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        input::placeholder {
+            color: #555;
+        }
+
+        input:focus {
+            background-color: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-dim);
+        }
+
+        /* Ocultar flechas del input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #cc0000;
+            box-shadow: 0 10px 20px rgba(255, 62, 62, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* --- ÁREA DE RESULTADOS (LOGS) --- */
+        .results-section {
+            margin-top: 40px;
+            text-align: left;
+        }
+
+        .results-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+            padding-left: 5px;
+        }
+
+        .results-box {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            max-height: 280px;
+            overflow-y: auto;
+            font-family: monospace; /* Fuente de código para los logs */
+        }
+
+        /* Scrollbar Personalizado y Sutil */
+        .results-box::-webkit-scrollbar { width: 6px; }
+        .results-box::-webkit-scrollbar-track { background: transparent; }
+        .results-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+        .log-line {
+            color: var(--success);
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            opacity: 0.9;
+        }
+
+        .log-line::before {
+            content: "→ ";
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="particles-js"></div>
+
+    <div class="container">
+        <div class="main-card">
+            <h1>Xploit Chk</h1>
+            <div class="subtitle">Advanced Auditor Terminal</div>
+
+            <form method="POST">
+                <div class="form-group">
+                    <input type="text" name="datos" placeholder="PAN | MES | AÑO | CVV" required autocomplete="off">
+                    <input type="number" name="cantidad" value="10" min="1" max="100" title="Cantidad a generar">
+                    <button type="submit">Generar Extrapolación</button>
+                </div>
+            </form>
+
+            {% if resultados %}
+            <div class="results-section">
+                <span class="results-label">Output logs:</span>
+                <div class="results-box">
+                    {% for r in resultados %}
+                        <div class="log-line">{{ r }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#ffffff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.2, "random": false },
+                "size": { "value": 2, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.1, "width": 1 },
+                "move": {
+                    "enable": true,
+                    "speed": 1, /* Movimiento lento y clean */
+                    "direction": "none",
+                    "random": true,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": { 
+                        "enable": true, 
+                        "mode": "grab" /* EFECTO CLAVE: Las partículas se conectan al mouse */
+                    },
+                    "onclick": { "enable": true, "mode": "push" },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": { "distance": 140, "line_linked": { "opacity": 0.3 } },
+                    "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 },
+                    "repulse": { "distance": 200, "duration": 0.4 },
+                    "push": { "particles_nb": 4 },
+                    "remove": { "particles_nb": 2 }
+                }
+            },
+            "retina_detect": true
+        });
+    </script>
+</body>
+</html>
