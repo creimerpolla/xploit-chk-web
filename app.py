@@ -77,4 +77,4 @@ def handle_check_bin():
 
 if __name__ == '__main__':
     # Importante: debug=False para que funcione bien en Render
-    app.run(debug=False, host='0.0.0.0', port=5000)v
+    app.run(debug=False, host='0.0.0.0', port=5000)
