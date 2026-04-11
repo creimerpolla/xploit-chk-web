@@ -4,130 +4,77 @@ import datetime
 
 app = Flask(__name__)
 
-# --- LÓGICA DE GENERACIÓN (Algoritmo de Luhn) ---
-def luhn_checksum(card_number):
-    """Calcula el dígito de control de Luhn."""
-    digits = list(map(int, card_number))
-    odd_digits = digits[-1::-2]
-    even_digits = digits[-2::-2]
-    total = sum(odd_digits)
-    for d in even_digits:
-        total += sum(list(map(int, str(d * 2))))
-    return total % 10
-
+# --- LÓGICA MATEMÁTICA (Algoritmo de Luhn) ---
 def generate_card(bin_pattern, month, year):
-    """Genera un número de tarjeta sintético válido."""
-    # Completar el BIN hasta 15 dígitos con números aleatorios
-    card_number = bin_pattern
+    # Limpiar el BIN de cualquier cosa que no sea número
+    bin_digits = "".join(filter(str.isdigit, bin_pattern))
+    
+    # Si el BIN es corto, lo completamos hasta 15 dígitos
+    card_number = bin_digits
     while len(card_number) < 15:
         card_number += str(random.randint(0, 9))
     
-    # Calcular el dígito 16 (Luhn)
+    # Algoritmo de Luhn para el dígito 16 (Dígito de verificación)
     digits = list(map(int, card_number))
     total = 0
     for i, d in enumerate(digits):
         if (len(digits) - i) % 2 == 0:
             d *= 2
-            if d > 9:
-                d -= 9
+            if d > 9: d -= 9
         total += d
     
     check_digit = (10 - (total % 10)) % 10
     card_number += str(check_digit)
     
-    # Formatear fecha
+    # Manejo de fechas aleatorias
     if month == "Rand":
         month = str(random.randint(1, 12)).zfill(2)
     if year == "Rand":
         year = str(random.randint(2024, 2040))
         
-    # Generar CVV aleatorio
     cvv = str(random.randint(100, 999))
-    
     return f"{card_number}|{month}|{year}|{cvv}"
 
-# --- LÓGICA DE BUSCADOR DE BIN ---
-def get_bin_info(bin_num):
-    """Buscador de BIN básico basado en red."""
-    if not bin_num or len(bin_num) < 1:
-        return "N/A", "N/A", "N/A"
-    
-    first_digit = bin_num[0]
-    network = "Desconocida"
-    
-    if first_digit == '4':
-        network = "Visa"
-    elif first_digit == '5':
-        network = "Mastercard"
-    elif first_digit == '3':
-        if len(bin_num) >= 2 and bin_num[0:2] in ['34', '37']:
-            network = "Amex"
-        else:
-            network = "JCB/Other"
-    elif first_digit == '6':
-        network = "Discover"
-        
-    # En una versión pro, aquí consultarías una base de datos real
-    card_type = "Crédito/Débito (Simulado)"
-    country = "Simulado"
-    
-    return network, card_type, country
-
-# --- RUTAS DE FLASK ---
+# --- RUTAS ---
 @app.route('/')
 def index():
-    # Generar lista de años hasta 2040 para los selectores
+    # Generamos las listas para los selectores del HTML
     current_year = datetime.datetime.now().year
     years = ["Rand"] + [str(y) for y in range(current_year, 2041)]
     months = ["Rand"] + [str(m).zfill(2) for m in range(1, 13)]
-    
     return render_template('index.html', years=years, months=months)
 
 @app.route('/generate', methods=['POST'])
-@app.route('/generate', methods=['POST'])
 def handle_generate():
     data = request.json
-    # Limpiamos el BIN de espacios, guiones o barras que ponga el usuario
-    bin_input = data.get('bin', '').replace(' ', '').replace('-', '').replace('|', '')
+    bin_input = data.get('bin', '400022')
     month = data.get('month', 'Rand')
     year = data.get('year', 'Rand')
     quantity = int(data.get('quantity', 10))
-    
-    # Si el usuario no pone nada, usamos un genérico, si no, lo que puso
-    bin_pattern = bin_input if bin_input.isdigit() else "400022"
 
     cards = []
     for _ in range(min(quantity, 100)):
-        cards.append(generate_card(bin_pattern, month, year))
-        
-    return jsonify({'cards': cards})
-    
-    # Validación básica del BIN
-    if not bin_input or not bin_input.isdigit():
-        bin_pattern = "400000" # BIN por defecto si falla
-    else:
-        bin_pattern = bin_input[:6] # Usamos solo los primeros 6-8
-
-    cards = []
-    for _ in range(min(quantity, 100)): # Límite de 100 por seguridad
-        cards.append(generate_card(bin_pattern, month, year))
+        cards.append(generate_card(bin_input, month, year))
         
     return jsonify({'cards': cards})
 
 @app.route('/check_bin', methods=['POST'])
 def handle_check_bin():
     data = request.json
-    bin_num = data.get('bin', '').replace(' ', '')
+    bin_num = data.get('bin', '')
     
-    network, card_type, country = get_bin_info(bin_num)
+    # Buscador de red simple
+    network = "Desconocida"
+    if bin_num.startswith('4'): network = "Visa"
+    elif bin_num.startswith('5'): network = "Mastercard"
+    elif bin_num.startswith('3'): network = "American Express"
     
     return jsonify({
-        'bin': bin_num[:6],
         'network': network,
-        'type': card_type,
-        'country': country
+        'type': "Crédito/Débito",
+        'country': "México"
     })
 
 if __name__ == '__main__':
-    # Importante: debug=False para producción en Render
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    # Importante: debug=False para que funcione bien en Render
+    app.run(debug=False, host='0.0.0.0', port=5000)v
