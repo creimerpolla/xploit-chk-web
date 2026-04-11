@@ -232,12 +232,86 @@
         <div class="tools-grid">
             
             <div class="tool-card">
-                <h2><span>⚡</span> Generador</h2>
-                
-                <div class="input-group">
-                    <label>Introduce tu BIN | MES | AÑO | CVV</label>
-                    <input type="text" id="genBin" placeholder="4000 0000 0000 0000 | MM | YYYY | 123" maxlength="16">
-                </div>
+    <h2><span>⚡</span> Generador</h2>
+    
+    <div class="input-group">
+        <label>BIN | MES | AÑO | CVV</label>
+        <input type="text" id="genBin" placeholder="400022xxxxxxxxxx" maxlength="16">
+    </div>
+
+    <div class="flex-inputs input-group">
+        <div style="width: 50%;">
+            <label>Mes</label>
+            <select id="genMonth">
+                {% for month in months %}
+                    <option value="{{ month }}">{{ month }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="width: 50%;">
+            <label>Año (Máx 2040)</label>
+            <select id="genYear">
+                {% for year in years %}
+                    <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>CANTIDAD (1-100)</label>
+        <input type="number" id="genQuantity" value="10" min="1" max="100">
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" onclick="generateCards()" style="flex: 2;">GENERAR</button>
+        <button class="btn" onclick="clearResults()" style="flex: 1; background: #ff5252; color: white;">BORRAR</button>
+    </div>
+
+    <textarea id="genResults" readonly 
+        style="width: 100%; height: 200px; background: rgba(0,0,0,0.6); color: #00f2fe; border: 1px solid var(--border-color); margin-top: 15px; padding: 10px; font-family: 'Fira Code', monospace; resize: none; border-radius: 6px; outline: none;">
+    </textarea>
+</div><div class="tool-card">
+    <h2><span>⚡</span> Generador</h2>
+    
+    <div class="input-group">
+        <label>BIN | MES | AÑO | CVV</label>
+        <input type="text" id="genBin" placeholder="400022xxxxxxxxxx" maxlength="16">
+    </div>
+
+    <div class="flex-inputs input-group">
+        <div style="width: 50%;">
+            <label>Mes</label>
+            <select id="genMonth">
+                {% for month in months %}
+                    <option value="{{ month }}">{{ month }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="width: 50%;">
+            <label>Año (Máx 2040)</label>
+            <select id="genYear">
+                {% for year in years %}
+                    <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>CANTIDAD (1-100)</label>
+        <input type="number" id="genQuantity" value="10" min="1" max="100">
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" onclick="generateCards()" style="flex: 2;">GENERAR</button>
+        <button class="btn" onclick="clearResults()" style="flex: 1; background: #ff5252; color: white;">BORRAR</button>
+    </div>
+
+    <textarea id="genResults" readonly 
+        style="width: 100%; height: 200px; background: rgba(0,0,0,0.6); color: #00f2fe; border: 1px solid var(--border-color); margin-top: 15px; padding: 10px; font-family: 'Fira Code', monospace; resize: none; border-radius: 6px; outline: none;">
+    </textarea>
+</div>
 
                 <div class="flex-inputs input-group">
                     <div style="width: 50%;">
@@ -372,6 +446,314 @@
                 resultsArea.innerHTML = '<span style="color: #ff5252;">Error de conexión.</span>';
             }
         }
-    </script>
+    <script>
+    // 1. Configuración de las ondas/partículas (Fondo movible)
+    particlesJS("particles-js", {
+        "particles": {
+            "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+            "color": { "value": "#4facfe" },
+            "shape": { "type": "circle" },
+            "opacity": { "value": 0.5 },
+            "size": { "value": 3, "random": true },
+            "line_linked": { "enable": true, "distance": 150, "color": "#00f2fe", "opacity": 0.3, "width": 1 },
+            "move": { "enable": true, "speed": 2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false }
+        },
+        "interactivity": {
+            "detect_on": "canvas",
+            "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } },
+            "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } } }
+        },
+        "retina_detect": true
+    });
+
+    // 2. Función para GENERAR (Limpia lo anterior y pone lo nuevo)
+    async function generateCards() {
+        const bin = document.getElementById('genBin').value;
+        const month = document.getElementById('genMonth').value;
+        const year = document.getElementById('genYear').value;
+        const quantity = document.getElementById('genQuantity').value;
+        const resultsArea = document.getElementById('genResults');
+
+        // Limpiamos el cuadro antes de mostrar los nuevos resultados
+        resultsArea.value = 'Generando...';
+
+        try {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin, month, year, quantity })
+            });
+            const data = await response.json();
+            
+            // Reemplazamos el texto "Generando..." con la lista de tarjetas
+            if (data.cards && data.cards.length > 0) {
+                resultsArea.value = data.cards.join('\n');
+            } else {
+                resultsArea.value = 'Error: Revisa el BIN (usa solo números)';
+            }
+        } catch (error) {
+            resultsArea.value = 'Error de conexión con el servidor.';
+        }
+    }
+
+    // 3. Función para BORRAR (Limpia todo el cuadro)
+    function clearResults() {
+        document.getElementById('genResults').value = '';
+        document.getElementById('genBin').value = '';
+    }
+
+    // 4. Función para el Buscador de BIN
+    async function checkBin() {
+        const bin = document.getElementById('checkBinInput').value;
+        const resultsArea = document.getElementById('binResults');
+        resultsArea.innerHTML = 'Buscando...';
+
+        try {
+            const response = await fetch('/check_bin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin })
+            });
+            const data = await response.json();
+            resultsArea.innerHTML = `
+                <div style="color: #00f2fe">Red: ${data.network}</div>
+                <div style="color: #00f2fe">Tipo: ${data.type}</div>
+            `;
+        } catch (error) {
+            resultsArea.innerHTML = 'Error al consultar.';
+        }
+    }
+</script><script>
+    // 1. Configuración de las ondas/partículas (Fondo movible)
+    particlesJS("particles-js", {
+        "particles": {
+            "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+            "color": { "value": "#4facfe" },
+            "shape": { "type": "circle" },
+            "opacity": { "value": 0.5 },
+            "size": { "value": 3, "random": true },
+            "line_linked": { "enable": true, "distance": 150, "color": "#00f2fe", "opacity": 0.3, "width": 1 },
+            "move": { "enable": true, "speed": 2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false }
+        },
+        "interactivity": {
+            "detect_on": "canvas",
+            "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } },
+            "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } } }
+        },
+        "retina_detect": true
+    });
+
+    // 2. Función para GENERAR (Limpia lo anterior y pone lo nuevo)
+    async function generateCards() {
+        const bin = document.getElementById('genBin').value;
+        const month = document.getElementById('genMonth').value;
+        const year = document.getElementById('genYear').value;
+        const quantity = document.getElementById('genQuantity').value;
+        const resultsArea = document.getElementById('genResults');
+
+        // Limpiamos el cuadro antes de mostrar los nuevos resultados
+        resultsArea.value = 'Generando...';
+
+        try {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin, month, year, quantity })
+            });
+            const data = await response.json();
+            
+            // Reemplazamos el texto "Generando..." con la lista de tarjetas
+            if (data.cards && data.cards.length > 0) {
+                resultsArea.value = data.cards.join('\n');
+            } else {
+                resultsArea.value = 'Error: Revisa el BIN (usa solo números)';
+            }
+        } catch (error) {
+            resultsArea.value = 'Error de conexión con el servidor.';
+        }
+    }
+
+    // 3. Función para BORRAR (Limpia todo el cuadro)
+    function clearResults() {
+        document.getElementById('genResults').value = '';
+        document.getElementById('genBin').value = '';
+    }
+
+    // 4. Función para el Buscador de BIN
+    async function checkBin() {
+        const bin = document.getElementById('checkBinInput').value;
+        const resultsArea = document.getElementById('binResults');
+        resultsArea.innerHTML = 'Buscando...';
+
+        try {
+            const response = await fetch('/check_bin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin })
+            });
+            const data = await response.json();
+            resultsArea.innerHTML = `
+                <div style="color: #00f2fe">Red: ${data.network}</div>
+                <div style="color: #00f2fe">Tipo: ${data.type}</div>
+            `;
+        } catch (error) {
+            resultsArea.innerHTML = 'Error al consultar.';
+        }
+    }
+</script><script>
+    // 1. Configuración de las ondas/partículas (Fondo movible)
+    particlesJS("particles-js", {
+        "particles": {
+            "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+            "color": { "value": "#4facfe" },
+            "shape": { "type": "circle" },
+            "opacity": { "value": 0.5 },
+            "size": { "value": 3, "random": true },
+            "line_linked": { "enable": true, "distance": 150, "color": "#00f2fe", "opacity": 0.3, "width": 1 },
+            "move": { "enable": true, "speed": 2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false }
+        },
+        "interactivity": {
+            "detect_on": "canvas",
+            "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } },
+            "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } } }
+        },
+        "retina_detect": true
+    });
+
+    // 2. Función para GENERAR (Limpia lo anterior y pone lo nuevo)
+    async function generateCards() {
+        const bin = document.getElementById('genBin').value;
+        const month = document.getElementById('genMonth').value;
+        const year = document.getElementById('genYear').value;
+        const quantity = document.getElementById('genQuantity').value;
+        const resultsArea = document.getElementById('genResults');
+
+        // Limpiamos el cuadro antes de mostrar los nuevos resultados
+        resultsArea.value = 'Generando...';
+
+        try {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin, month, year, quantity })
+            });
+            const data = await response.json();
+            
+            // Reemplazamos el texto "Generando..." con la lista de tarjetas
+            if (data.cards && data.cards.length > 0) {
+                resultsArea.value = data.cards.join('\n');
+            } else {
+                resultsArea.value = 'Error: Revisa el BIN (usa solo números)';
+            }
+        } catch (error) {
+            resultsArea.value = 'Error de conexión con el servidor.';
+        }
+    }
+
+    // 3. Función para BORRAR (Limpia todo el cuadro)
+    function clearResults() {
+        document.getElementById('genResults').value = '';
+        document.getElementById('genBin').value = '';
+    }
+
+    // 4. Función para el Buscador de BIN
+    async function checkBin() {
+        const bin = document.getElementById('checkBinInput').value;
+        const resultsArea = document.getElementById('binResults');
+        resultsArea.innerHTML = 'Buscando...';
+
+        try {
+            const response = await fetch('/check_bin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin })
+            });
+            const data = await response.json();
+            resultsArea.innerHTML = `
+                <div style="color: #00f2fe">Red: ${data.network}</div>
+                <div style="color: #00f2fe">Tipo: ${data.type}</div>
+            `;
+        } catch (error) {
+            resultsArea.innerHTML = 'Error al consultar.';
+        }
+    }
+<script>
+    // 1. Configuración de las ondas/partículas (Fondo movible)
+    particlesJS("particles-js", {
+        "particles": {
+            "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+            "color": { "value": "#4facfe" },
+            "shape": { "type": "circle" },
+            "opacity": { "value": 0.5 },
+            "size": { "value": 3, "random": true },
+            "line_linked": { "enable": true, "distance": 150, "color": "#00f2fe", "opacity": 0.3, "width": 1 },
+            "move": { "enable": true, "speed": 2, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false }
+        },
+        "interactivity": {
+            "detect_on": "canvas",
+            "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } },
+            "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } } }
+        },
+        "retina_detect": true
+    });
+
+    // 2. Función para GENERAR (Limpia lo anterior y pone lo nuevo)
+    async function generateCards() {
+        const bin = document.getElementById('genBin').value;
+        const month = document.getElementById('genMonth').value;
+        const year = document.getElementById('genYear').value;
+        const quantity = document.getElementById('genQuantity').value;
+        const resultsArea = document.getElementById('genResults');
+
+        // Limpiamos el cuadro antes de mostrar los nuevos resultados
+        resultsArea.value = 'Generando...';
+
+        try {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin, month, year, quantity })
+            });
+            const data = await response.json();
+            
+            // Reemplazamos el texto "Generando..." con la lista de tarjetas
+            if (data.cards && data.cards.length > 0) {
+                resultsArea.value = data.cards.join('\n');
+            } else {
+                resultsArea.value = 'Error: Revisa el BIN (usa solo números)';
+            }
+        } catch (error) {
+            resultsArea.value = 'Error de conexión con el servidor.';
+        }
+    }
+
+    // 3. Función para BORRAR (Limpia todo el cuadro)
+    function clearResults() {
+        document.getElementById('genResults').value = '';
+        document.getElementById('genBin').value = '';
+    }
+
+    // 4. Función para el Buscador de BIN
+    async function checkBin() {
+        const bin = document.getElementById('checkBinInput').value;
+        const resultsArea = document.getElementById('binResults');
+        resultsArea.innerHTML = 'Buscando...';
+
+        try {
+            const response = await fetch('/check_bin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bin })
+            });
+            const data = await response.json();
+            resultsArea.innerHTML = `
+                <div style="color: #00f2fe">Red: ${data.network}</div>
+                <div style="color: #00f2fe">Tipo: ${data.type}</div>
+            `;
+        } catch (error) {
+            resultsArea.innerHTML = 'Error al consultar.';
+        }
+    }
+</script>
 </body>
 </html>
