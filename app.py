@@ -84,12 +84,23 @@ def index():
     return render_template('index.html', years=years, months=months)
 
 @app.route('/generate', methods=['POST'])
+@app.route('/generate', methods=['POST'])
 def handle_generate():
     data = request.json
-    bin_input = data.get('bin', '').replace(' ', '')
+    # Limpiamos el BIN de espacios, guiones o barras que ponga el usuario
+    bin_input = data.get('bin', '').replace(' ', '').replace('-', '').replace('|', '')
     month = data.get('month', 'Rand')
     year = data.get('year', 'Rand')
     quantity = int(data.get('quantity', 10))
+    
+    # Si el usuario no pone nada, usamos un genérico, si no, lo que puso
+    bin_pattern = bin_input if bin_input.isdigit() else "400022"
+
+    cards = []
+    for _ in range(min(quantity, 100)):
+        cards.append(generate_card(bin_pattern, month, year))
+        
+    return jsonify({'cards': cards})
     
     # Validación básica del BIN
     if not bin_input or not bin_input.isdigit():
